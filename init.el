@@ -1,19 +1,22 @@
-;; such emacs init
+:;; such emacs init
 ;;
 
 (require 'package)
 
-(add-to-list 'package-archives
-             '("melpa" . "https://melpa.org/packages/") t)
 
-(when (< emacs-major-version 24)
+(setq package-archives '(("gnu" . "http://elpa.gnu.org/packages/")
+                     ("marmalade" . "http://marmalade-repo.org/packages/")
+                     ("melpa" . "http://melpa.org/packages/")))
+
+
+;;(when (< emacs-major-version 24)
   ;; For important compatibility libraries like cl-lib
-  (add-to-list 'package-archives '("gnu" . "https://elpa.gnu.org/packages/")))
+  ;;(add-to-list 'package-archives '("gnu" . "https://elpa.gnu.org/packages/")))
 
 ; list the packages you want
 (setq package-list
       '(better-defaults
-        undo-tree
+	undo-tree
         evil
         paredit
         evil-paredit
@@ -34,11 +37,7 @@
         company
         helm
         helm-projectile
-        lfe-mode
-        flycheck
-        erlang
-        go-mode
-        racket-mode))
+        lfe-mode))
 
 
 ; activate all the packages (in particular autoloads)
@@ -309,7 +308,6 @@
 
 
 (sharp-mode-large)
-
 
 
 
