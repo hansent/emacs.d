@@ -1,4 +1,4 @@
-:;; such emacs init
+;; such emacs init
 ;;
 
 (require 'package)
