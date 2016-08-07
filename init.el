@@ -3,20 +3,20 @@
 
 (require 'package)
 
-
 (setq package-archives '(("gnu" . "http://elpa.gnu.org/packages/")
                      ("marmalade" . "http://marmalade-repo.org/packages/")
                      ("melpa" . "http://melpa.org/packages/")))
 
-
-;;(when (< emacs-major-version 24)
+(when (< emacs-major-version 24)
   ;; For important compatibility libraries like cl-lib
-  ;;(add-to-list 'package-archives '("gnu" . "https://elpa.gnu.org/packages/")))
+  (add-to-list 'package-archives '("gnu" . "https://elpa.gnu.org/packages/")))
+
+
 
 ; list the packages you want
 (setq package-list
       '(better-defaults
-	undo-tree
+        undo-tree
         evil
         paredit
         evil-paredit
@@ -37,7 +37,12 @@
         company
         helm
         helm-projectile
-        lfe-mode))
+        lfe-mode
+        flycheck
+        erlang
+        go-mode
+        racket-mode
+        neotree))
 
 
 ; activate all the packages (in particular autoloads)
@@ -72,6 +77,19 @@
 
 ;; evil
 (evil-mode 1)
+
+;; neotree
+(require 'neotree)
+(global-set-key [f8] 'neotree-toggle)
+(setq neo-smart-open t)
+(add-hook 'neotree-mode-hook
+        (lambda ()
+            (define-key evil-normal-state-local-map (kbd "TAB") 'neotree-enter)
+            (define-key evil-normal-state-local-map (kbd "SPC") 'neotree-enter)
+            (define-key evil-normal-state-local-map (kbd "q") 'neotree-hide)
+            (define-key evil-normal-state-local-map (kbd "RET") 'neotree-enter)))
+
+
 
 ;; fiplr
 (setq fiplr-root-markers '(".git" ".svn"))
@@ -146,54 +164,15 @@
 (if (eq system-type 'darwin)
   (setq mac-allow-anti-aliasing t))
 
-(defun preferred-font (size)
-  (concat
-   (if (eq system-type 'darwin)
-       "Fira Code"
-     "Consolas")
-   "-" (number-to-string size)))
-
-
 (setq preferred-font
       (if (eq system-type 'darwin)
-          (preferred-font 14)
-        (preferred-font 10)))
+          "Consolas-16"
+        "Consolas-12"))
 
 
 (set-face-attribute 'default nil :font preferred-font)
 (set-frame-font preferred-font nil t)
-(setq-default lispy-spacing 5)
-
-(defun set-advanced-ligatures ()
-  (interactive)
-  (let ((alist '((33 . ".\\(?:\\(?:==\\|!!\\)\\|[!=]\\)")
-                 (35 . ".\\(?:###\\|##\\|_(\\|[#(?[_{]\\)")
-                 (36 . ".\\(?:>\\)")
-                 (37 . ".\\(?:\\(?:%%\\)\\|%\\)")
-                 (38 . ".\\(?:\\(?:&&\\)\\|&\\)")
-                 (42 . ".\\(?:\\(?:\\*\\*/\\)\\|\\(?:\\*[*/]\\)\\|[*/>]\\)")
-                 (43 . ".\\(?:\\(?:\\+\\+\\)\\|[+>]\\)")
-                 (45 . ".\\(?:\\(?:-[>-]\\|<<\\|>>\\)\\|[<>}~-]\\)")
-                 (46 . ".\\(?:\\(?:\\.[.<]\\)\\|[.=-]\\)")
-                 (47 . ".\\(?:\\(?:\\*\\*\\|//\\|==\\)\\|[*/=>]\\)")
-                 (48 . ".\\(?:x[a-zA-Z]\\)")
-                 (58 . ".\\(?:::\\|[:=]\\)")
-                 (59 . ".\\(?:;;\\|;\\)")
-                 (60 . ".\\(?:\\(?:!--\\)\\|\\(?:~~\\|->\\|\\$>\\|\\*>\\|\\+>\\|--\\|<[<=-]\\|=[<=>]\\||>\\)\\|[*$+~/<=>|-]\\)")
-                 (61 . ".\\(?:\\(?:/=\\|:=\\|<<\\|=[=>]\\|>>\\)\\|[<=>~]\\)")
-                 (62 . ".\\(?:\\(?:=>\\|>[=>-]\\)\\|[=>-]\\)")
-                 (63 . ".\\(?:\\(\\?\\?\\)\\|[:=?]\\)")
-                 (91 . ".\\(?:]\\)")
-                 (92 . ".\\(?:\\(?:\\\\\\\\\\)\\|\\\\\\)")
-                 (94 . ".\\(?:=\\)")
-                 (119 . ".\\(?:ww\\)")
-                 (123 . ".\\(?:-\\)")
-                 (124 . ".\\(?:\\(?:|[=|]\\)\\|[=>|]\\)")
-                 (126 . ".\\(?:~>\\|~~\\|[>=@~-]\\)")
-                 )))
-    (dolist (char-regexp alist)
-      (set-char-table-range composition-function-table (car char-regexp)
-                            `([,(cdr char-regexp) 0 font-shape-gstring])))))
+(setq-default lispy-spacing 3)
 
 ;; helm
 (require 'helm-config)
@@ -205,8 +184,9 @@
 (projectile-global-mode)
 
 (setq projectile-enable-caching t)
-(setq projectile-switch-project-action 'helm-projectile)
 (setq projectile-completion-system 'helm)
+(setq projectile-switch-project-action 'projectile-dired)
+
 
 (defun my-find-files ()
   (interactive)
@@ -219,12 +199,6 @@
   (if (projectile-project-p)
       (helm-projectile)
     (helm-for-files)))
-
-(global-set-key (kbd "M-x") 'undefined)
-(global-set-key (kbd "M-x") 'helm-M-x)
-(global-set-key (kbd "C-x C-f") 'helm-find-files)
-(global-set-key (kbd "C-x C-p") 'my-find-files)
-(global-set-key (kbd "C-x b") 'my-switch-to-buffer)
 
 (defun daytime-colors ()
   (interactive)
@@ -247,7 +221,7 @@
 
 (defun larger-font ()
   (interactive)
-  (set-default-font (preferred-font 18)))
+  (set-default-font "Consolas-18"))
 
 (defun enable-ross-mode ()
   (interactive)
@@ -286,10 +260,10 @@
 (defun sharp-mode ()
   (interactive)
 
-  (let ((font "Andale Mono-14:antialias=false"))
-    (set-default-font font)
-    (set-face-attribute 'default nil :font font)
-    (set-frame-font font nil t))
+  ;;(let ((font "Andale Mono-10:antialias=false"))
+  ;;  (set-default-font font)
+  ;;  (set-face-attribute 'default nil :font font)
+  ;;  (set-frame-font font nil t))
 
   (load-theme 'base16-monokai-dark t)
   (set-face-background 'hl-line "#333333")
@@ -300,14 +274,28 @@
   (sharp-mode)
   (larger-font))
 
-;;(set-time-based-theme)
 
-(defun kirk-mode ()
-  (interactive)
-  (set-default-font (preferred-font 22)))
+;; scroll one line at a time (less "jumpy" than defaults)
+;; scroll faster when holding shift
+(setq mouse-wheel-scroll-amount '(1 ((shift) . 5))) ;; one line, 5 with shift
+(setq mouse-wheel-follow-mouse 't) ;; scroll window under mouse
+(setq mouse-wheel-progressive-speed nil)
+(setq scroll-step 1) ;; keyboard scroll one line at a time
 
+
+(global-set-key (kbd "M-x") 'undefined)
+(global-set-key (kbd "M-x") 'helm-M-x)
+(global-set-key (kbd "C-x C-f") 'helm-find-files)
+(global-set-key (kbd "C-x C-p") 'my-find-files)
+(global-set-key (kbd "C-x b") 'my-switch-to-buffer)
+
+(define-key helm-map (kbd "<tab>") 'helm-execute-persistent-action) ; rebind tab to do persistent action
+(define-key helm-map (kbd "C-i") 'helm-execute-persistent-action) ; make TAB works in terminal
+(define-key helm-map (kbd "C-z")  'helm-select-action) ; list actions using C-z
+(global-set-key (kbd "<s-right>") 'move-end-of-line)
+(global-set-key (kbd "<s-left>") 'move-beginning-of-line)
+
+(global-set-key (kbd "<s-up>") 'scroll-down)
+(global-set-key (kbd "<s-down>") 'scroll-up)
 
 (sharp-mode-large)
-
-
-
