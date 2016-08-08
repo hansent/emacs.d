@@ -7,11 +7,6 @@
                      ("marmalade" . "http://marmalade-repo.org/packages/")
                      ("melpa" . "http://melpa.org/packages/")))
 
-(when (< emacs-major-version 24)
-  ;; For important compatibility libraries like cl-lib
-  (add-to-list 'package-archives '("gnu" . "https://elpa.gnu.org/packages/")))
-
-
 
 ; list the packages you want
 (setq package-list
@@ -22,12 +17,13 @@
         evil-paredit
         cider
         clojure-mode
-        sass-mode
-        less-css-mode
-        git-gutter
-        powerline
-        smex
-        fiplr
+        ;; inf-clojure
+        ;; sass-mode
+        ;; less-css-mode
+        ;; git-gutter
+        ;; powerline
+        ;; smex
+        ;; fiplr
         clj-refactor
         js2-mode
         base16-theme
@@ -40,9 +36,9 @@
         lfe-mode
         flycheck
         erlang
-        go-mode
-        racket-mode
-        neotree))
+        neotree
+        evil-leader
+        ))
 
 
 ; activate all the packages (in particular autoloads)
@@ -74,9 +70,6 @@
 (setq visible-bell nil) ;; The default
 (setq ring-bell-function 'ignore)
 
-
-;; evil
-(evil-mode 1)
 
 ;; neotree
 (require 'neotree)
@@ -133,6 +126,19 @@
 
 (add-hook 'clojure-mode-hook #'customize-clojure-indents)
 
+
+
+;; clojure script mode
+(defun figwheel-repl ()
+  (interactive)
+  (run-clojure "lein figwheel"))
+
+(add-hook 'clojure-mode-hook #'inf-clojure-minor-mode)
+
+
+
+
+
 ;; smex
 (global-set-key (kbd "M-x") 'smex)
 (global-set-key (kbd "M-X") 'smex-major-mode-commands)
@@ -156,9 +162,6 @@
 ;; lfe mode
 (add-hook 'lfe-mode-hook #'paredit-mode)
 
-;; racket-mode
-(setq-default racket-racket-program "/Applications/Racket v6.2.1/bin/racket")
-(setq-default racket-raco-program "/Applications/Racket v6.2.1/bin/raco")
 
 ;; font
 (if (eq system-type 'darwin)
@@ -223,16 +226,6 @@
   (interactive)
   (set-default-font "Consolas-18"))
 
-(defun enable-ross-mode ()
-  (interactive)
-  (setq-default indent-tabs-mode t)
-  (setq-default tab-width 4))
-
-(defun disable-ross-mode ()
-  (interactive)
-  (setq-default indent-tabs-mode nil)
-  (setq-default tab-width 8))
-
 (defun vt220 ()
   (interactive)
 
@@ -265,7 +258,8 @@
   ;;  (set-face-attribute 'default nil :font font)
   ;;  (set-frame-font font nil t))
 
-  (load-theme 'base16-monokai-dark t)
+  ;(load-theme 'base16-monokai-dark t)
+  (nighttime-colors)
   (set-face-background 'hl-line "#333333")
   (set-face-foreground 'highlight nil))
 
@@ -273,6 +267,22 @@
   (interactive)
   (sharp-mode)
   (larger-font))
+
+
+
+
+
+(defun comment-or-uncomment-region-or-line ()
+    "Comments or uncomments the region or the current line if there's no active region."
+    (interactive)
+    (let (beg end)
+        (if (region-active-p)
+            (setq beg (region-beginning) end (region-end))
+            (setq beg (line-beginning-position) end (line-end-position)))
+        (comment-or-uncomment-region beg end)
+        (next-line)))
+
+
 
 
 ;; scroll one line at a time (less "jumpy" than defaults)
@@ -283,6 +293,13 @@
 (setq scroll-step 1) ;; keyboard scroll one line at a time
 
 
+(setq vc-follow-symlinks nil)
+
+
+
+;; key bindings
+(global-set-key [kp-delete] 'delete-char) ;; sets fn-delete to
+
 (global-set-key (kbd "M-x") 'undefined)
 (global-set-key (kbd "M-x") 'helm-M-x)
 (global-set-key (kbd "C-x C-f") 'helm-find-files)
@@ -292,10 +309,48 @@
 (define-key helm-map (kbd "<tab>") 'helm-execute-persistent-action) ; rebind tab to do persistent action
 (define-key helm-map (kbd "C-i") 'helm-execute-persistent-action) ; make TAB works in terminal
 (define-key helm-map (kbd "C-z")  'helm-select-action) ; list actions using C-z
+
 (global-set-key (kbd "<s-right>") 'move-end-of-line)
 (global-set-key (kbd "<s-left>") 'move-beginning-of-line)
-
 (global-set-key (kbd "<s-up>") 'scroll-down)
 (global-set-key (kbd "<s-down>") 'scroll-up)
+(global-set-key (kbd "<s-d>") 'eval-last-sexp)
+(global-set-key (kbd "<s-D>") 'eval-defun)
 
-(sharp-mode-large)
+
+
+
+(evil-leader/set-key
+  "e" 'my-find-files
+  "b" 'my-switch-to-buffer
+  "k" 'kill-buffer
+  ":"  'eval-expression
+  "x"  'helm-M-x  
+  ";"  'comment-or-uncomment-region-or-line  )
+
+(global-evil-leader-mode)
+(evil-leader/set-leader ",")
+(evil-mode 1)
+
+(evil-define-key 'insert global-map (kbd "s-d") 'eval-last-sexp)
+(evil-define-key 'normal global-map (kbd "s-d") 'eval-defun)
+
+
+;; Make escape quit everything, whenever possible.
+(define-key evil-normal-state-map [escape] 'keyboard-quit)
+(define-key evil-visual-state-map [escape] 'keyboard-quit)
+(define-key minibuffer-local-map [escape] 'minibuffer-keyboard-quit)
+(define-key minibuffer-local-ns-map [escape] 'minibuffer-keyboard-quit)
+(define-key minibuffer-local-completion-map [escape] 'minibuffer-keyboard-quit)
+(define-key minibuffer-local-must-match-map [escape] 'minibuffer-keyboard-quit)
+(define-key minibuffer-local-isearch-map [escape] 'minibuffer-keyboard-quit)
+
+
+
+
+
+
+
+
+(sharp-mode)
+
